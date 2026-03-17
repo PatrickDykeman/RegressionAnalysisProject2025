@@ -1,0 +1,51 @@
+School Name,R&D Expenditures in 2023 (in billions),Public/Private,AAU Member,College Town/City,Total Student Population,Acceptance Rate (UG),Median Postgraduate Salary (in hundreds of thousands),Student To Faculty Ratio (number listed to one student),Total Operating Budget(in billions)
+Johns Hopkins U.,3.80159,Private,Yes,City,"30,362",7.56,1.4621,6,7.803
+"U. California, San Francisco",2.04654,Public,No ,City,"3,139",2.7,0.9231,11,10.2
+U. Pennsylvania,1.95362,Private,Yes,City,"29,109",5,1.0001,8,17.7
+"U. Michigan, Ann Arbor",1.92588,Public,Yes,College Town,"53,082",17.9,0.7381,15,4.5
+"U. Washington, Seattle",1.73409,Public,Yes,City,"55,620",42.5,0.6501,20,7.53
+U. Wisconsin-Madison,1.73195,Public,Yes,City,"48,557",43.3,0.5701,18,4
+"U. California, Los Angeles",1.72167,Public,Yes,City,"46,678",9,0.6281,19,11
+"U. California, San Diego",1.70541,Public,Yes,City,"42,376",28.4,0.6501,26,4.2
+"U. North Carolina, The, Chapel Hill",1.54962,Public,Yes,College Town,"32,234",18.7,0.5711,14,8.42
+Stanford U.,1.53785,Private,Yes,College Town,"18,446",3.91,1.3211,6,11.3
+Duke U.,1.50800,Private,Yes,City,"17,112",6.78,1.1001,5,16.465
+New York U.,1.45742,Private,Yes,City,"57,335",9.41,0.7531,10,5.4
+Cornell U.,1.45197,Private,Yes,College Town,"26,264",8.16,0.8001,9,5.4
+"Ohio State U., The",1.44919,Public,Yes,City,"60,046",50.8,0.5141,18,8
+Harvard U.,1.43522,Private,Yes,College Town,"24,519",3.5,0.9961,7,6.7
+Georgia Institute of Technology,1.40508,Public,Yes,City,"47,961",12.7,0.8941,21,2.5465
+"U. Pittsburgh, Pittsburgh",1.39808,Public,Yes,City,"34,525",49.7,0.5421,13,2.81
+"U. Maryland, The ",1.38530,Public,Yes,College Town,"40,813",44.8,0.6781,17,2.49
+Columbia U. in the City of New York,1.34195,Private,Yes,City,"35,279",4.23,0.8851,6,6.6
+Yale U.,1.32681,Private,Yes,College Town,"13,433",4.5,0.8181,5,4.9
+"U. Minnesota, Twin Cities",1.32018,Public,Yes,City,"54,890",77,0.5801,17,4.5
+"Texas A&M U., College Station and Health Science Center",1.27781,Public,Yes,College Town,"76,633",63.2,0.5941,21,2.6
+"U. Texas M. D. Anderson Cancer Center, Houston",1.25519,Public,No ,City,355,4,0.6081,9,6.3
+Vanderbilt U. and Vanderbilt U. Medical Center,1.25316,Private,Yes,City,"16,500",5.1,0.7391,8,6.8
+U. Florida,1.25020,Public,Yes,College Town,"61,889",24,0.6081,16,3.885
+"Pennsylvania State U., The, University Park and Hershey Medical Center",1.20679,Public,Yes,College Town,"50,399",54.2,0.5561,16,5.5
+"Washington U., Saint Louis",1.16886,Privte,Yes,City,"16,500",12,0.7811,7,4.6
+U. Southern California,1.15480,Private,Yes,City,"47,147",10,0.7451,8,7.4
+Northwestern U.,1.11427,Private,Yes,College Town,"23,203",7.15,0.7681,6,3
+Emory U.,1.09433,Private,Yes,City,"15,046",11.1,0.7501,8,8.57
+"U. California, Berkeley",1.07675,Public,Yes,College Town,"45,882",9.3,0.7491,18,3.584
+"U. Texas, The, Austin",1.03584,Public,Yes,City,"53,082",29.1,0.6091,18,3.97
+Massachusetts Institute of Technology,1.00008,Private,Yes,City,"12,829",5,1.9691,3,4.35
+Icahn School of Medicine at Mount Sinai,0.97248,Private,No ,City,961,1.41,0.6081,7,1.86
+"U. California, Davis",0.96240,Public,Yes,College Town,"40,848",44.6,0.5851,22,6.7
+U. Arizona,0.95542,Public,Yes,City,"53,001",85.7,0.4771,20,2.7
+Arizona State U.,0.90378,Public,Yes,City,"79,593",90.2,0.5281,18,2.7
+"Indiana U., Bloomington",0.85306,Public,Yes,College Town,"47,527",80.4,0.5341,18,4.3
+Baylor C. Medicine,0.84731,Private,No ,City,"1,699",4.06,0.6561,15,0.903
+"Purdue U., West Lafayette",0.84457,Public,Yes,College Town,"57,310",43.4,0.6081,15,3
+Michigan State U.,0.84408,Public,Yes,College Town,"51,838",84.8,0.5511,17,3
+"Rutgers, The State U. New Jersey, New Brunswick",0.83172,Public,Yes,College Town,"50,617",65.3,0.6131,17,5.4
+"U. Illinois, Urbana-Champaign",0.82102,Public,Yes,College Town,"56,916",59,0.6261,20,8.3
+U. Texas Southwestern Medical Center,0.80039,Public,No ,City,"2,501",3.96,0.5601,11,5.5
+"U. Alabama, The, Birmingham",0.78048,Public,No ,College Town,"21,160",88.4,0.4661,18,6.97
+Boston U.,0.77320,Private,Yes,City,"36,624",10.8,0.6571,10,2.556
+"U. Utah, The",0.72371,Public,Yes,College Town,"35,260",87.2,0.5521,19,7.7
+"U. Virginia, Charlottesville",0.71446,Public,Yes,College Town,"25,924",16.9,0.8231,14,5.4
+U. Cincinnati,0.69864,Public,No ,City,"43,338",87.7,0.4831,19,1.656
+U. Colorado Anschutz Medical Campus,0.68603,Public,No ,City,"4,518",77.8,0.7541,5,6.28
