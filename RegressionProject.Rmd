@@ -1,0 +1,410 @@
+---
+title: "Explaining R&D Expenditures by University" 
+author: "Team PEM: Patrick Dykeman, Elida Kuka, Matthew Koe"
+fontsize: 12pt
+geometry: margin=1in
+urlcolor: black
+output:
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+- \usepackage{setspace}
+- \onehalfspacing
+---
+\begin{center}
+\includegraphics[height=\textwidth]{TitleImage.jpg}
+\end{center}
+---
+
+------------------------------------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, highlight=FALSE, comment=NA, warnings=FALSE,message=FALSE)
+```
+
+```{r, echo=FALSE, warning=FALSE,results=FALSE}
+library(dplyr)
+library(gridExtra)
+library(ggplot2)
+library(olsrr)
+library(car)
+library(MASS)
+ProjectData <- read.csv("Stat 3220 Final Data - Sheet2.csv")
+summary(ProjectData)
+# Renaming columns for easier coding
+colnames(ProjectData) <- c("School", "RD_Spend", "Public_Private", "AAU", 
+                    "Location_Type", "Student_Pop", "Acceptance_Rate", 
+                    "Postgrad_Salary", "Student_Faculty_Ratio", "Operating_Budget")
+# Removing commas from numbers and converting to numeric
+ProjectData$Student_Pop <- as.numeric(gsub(",", "", ProjectData$Student_Pop))
+ProjectData$Operating_Budget <- as.numeric(gsub(",", "", ProjectData$Operating_Budget))
+# Fix typo in data sheet
+ProjectData$Public_Private[ProjectData$Public_Private == "Privte"] <- "Private"
+# Convert categorical variables to Dummy Variables
+ProjectData$Public_Private <- as.factor(ProjectData$Public_Private)
+ProjectData$AAU <- as.factor(ProjectData$AAU)
+ProjectData$Location_Type <- as.factor(ProjectData$Location_Type)
+summary(ProjectData)
+```
+
+\newpage
+
+## Introduction
+
+Research universities conduct mold the future of our society, improving the economy, driving innovation, and bringing positive change to the lives of others (Rosowsky, 2022). In 2023 alone, colleges and universities accounted for 46.7% of America's total research and development (R&D) spending (Long, 2025), highlighting the central role that universities play in advancing technological and educational progress. Such institutions serve as powerful economic engines: research creates jobs, technology that supports local communities, and particularly, research advances our knowledge and practices related to health care.
+
+However, recent policy decisions have adversely affected the money allocated to schools for research. Early this year, the Trump administration terminated over \$1.5 billion in federal research grants (Flannery, 2025), resulting in job losses, wasted taxpayer dollars, and major setbacks to workforce development at universities across the country. As future funding becomes uncertain, our project's main goal is to understand what factors are most important in determining the R&D spending exhibited by America's leading research institutions.
+
+To answer this question, we examined America's top 50 U.S. institutions with the highest reported R&D expenditures in 2023 and collected data mainly from individual university websites. While we identified 8 possible useful variables — 3 qualitative and 5 quantitative — we were most interested in the impact of the following 3 variables embedded in the following 3 research questions: Do universities with a greater **total operating budget** spend more on research and development? To what extent does **public vs. private institutional status** predict differences in R&D expenditures? Do universities with higher **mid-career median post-graduation** salaries exhibit higher levels of R&D expenditures?
+
+## Data Summary
+
+### Data Sources
+
+Outside of individual university websites, the data we compiled came from a variety of reputable sources, including the National Science Foundation for the R&D expenditures response variable and the Association of American Universities for whether universities were official members. For the type of location, we used official census data to classify the settings of universities as either in a "college town" for populations less than 150,000 or in a "city" for populations greater than 150,000. For mid-career median post-graduation salary, we used the trusted website College Transitions. The remainder of our data was provided by individual universities for the remaining 5 variables.
+
+Summarizing this, the 5 quantitative predictors we collected were total student population, acceptance rate, mid-career post-graduation salary, student:faculty ratio, and total operating budget, and the 3 qualitative predictors we collected were school type (public v. private), region (city v. college town), and Association of American Universities membership status (member v. non-member).
+
+### Exploratory Data Analysis
+
+```{r, echo=FALSE, warning=FALSE,results=FALSE, fig.width=8, fig.height=5, out.width="85%"}
+par(mfrow=c(2,3), mar=c(5,5,4,2))
+
+ResponseHisto <- hist(ProjectData$RD_Spend, 
+                      main = "Histogram of R&D",
+                      xlab = "R&D Expenditures",
+                      ylab = "University Frequency",
+                      breaks = 10,                        
+                      xlim = range(pretty(ProjectData$RD_Spend)), 
+                      xaxt = "s")
+  
+OperatingBudgetPlot <- plot(ProjectData$RD_Spend ~ ProjectData$Operating_Budget, data = ProjectData, xlab="Total Operating Budget
+(in bilions of USD)", ylab = "R&D Expenditures", main = "Total Budget Plot")
+
+RatioPlot <- plot(ProjectData$RD_Spend ~ ProjectData$Postgrad_Salary, data = ProjectData, xlab="Median Postgrad Salary 
+(in hundreds of thousdands of USD)", ylab = "R&D Expenditures", main = "Postgrad Salary Plot")
+
+AcceptanceRatePlot <- plot(ProjectData$RD_Spend ~ ProjectData$Acceptance_Rate, data = ProjectData, xlab="Acceptance Rate (%)", ylab = "R&D Expenditures", main = "Acceptance Rate Plot")
+
+PublicPrivatePlot <- boxplot(ProjectData$RD_Spend~ProjectData$Public_Private, xlab="Type of School", ylab="R&D Expenditures", main="School Type vs R&D")
+
+RegionPlot <- boxplot(ProjectData$RD_Spend~ProjectData$Location_Type, xlab="Region Classification", ylab="R&D Expenditures", main = "Region vs R&D")
+```
+
+#### EDA Summary
+
+Looking at the histogram of R&D expenditures, we see that the distribution is skewed to the right, with most universities clustered at lower to middle levels of research spending, while only a few universities report exceptionally high expenditures. Therefore, there might influential outliers in our data. Both scatterplots of total pperating budget and post-graduation salary show positive associations with R&D expenditures. Specifically, total operating budget appears to have the strongest linear relationship with R&D spending, possibly suggesting that universities with larger budgets tend to spend more heavily in research. Post-graduation salary displays a moderate positive trend, although with higher variability and fewer influential points.
+
+The acceptance rate plot suggests that there is weak to no clear relationship with R&D expenditure, as research spending remains widely spread across both selective and less selective universities. The public vs. private universities boxplot shows slightly higher median R&D expenditures among private institutions. Although we might see the overlap, we cannot indicate that school type alone may strongly predict research spending. There is a similar case for the region box-plots, and we conclude that region classification does not have a large independent effect on R&D levels.
+
+Using the EDA as a preliminary analysis suggests that total operating budget is potentially the strongest predictor of R&D expenditures, while the other predictors like acceptance rate, school type, region all have weaker relationships. We will use further modeling to determine which variables remain significant when considered jointly.
+
+## Methods and Analysis
+
+For our model, we decided to use multiple linear regression (MLR) to assess the factors associated with 2023 R&D expenditures among the top 50 universities in terms of reported research spending. First we tested for multicollinearity where we got the average VIF(1.8404) which is below 3, indicating that multicollinearity is not a problem for the quantitative predictors. For our variable screen and model selection we used step-wise regression from both sides to determine which predictors were actually significant, entering variables with p \< 0.10 and removing variables with p \> 0.30. As for qualitative predictors, we conducted t-tests to determine which of the qualitative predictors should remain in the regression model. None of them came out as significant, but we decided to keep public vs. private in order to address our initial related research question. After our screening process we were left with the variables mid-career median postgraduate salary, total operating budget, and public vs. private status for our hypothesized linear model. We created a dummy variable for the public vs. private: 1 for public universities, and 0 for private universities in order to incorporate school type into the regression.
+
+**Hypothesized Linear Model**: $E(RD)=\beta_0+\beta_1PGS+\beta_2TOB+\beta_3PUBPRIV$ , PUBPRIV = 1 if Public, 0 if Private
+
+Next, we used ordinary least squares to get coefficient estimates in order to assess the standard regression assumptions. For the first assumption, lack of fit, we observed clear patterns and that observations were centered around 0, indicating the mean zero assumption was supported. The constant variance assumption was evaluated using residuals versus fitted values, where there were moderate fanning out patterns, violating the assumption. Similarly, normality was assessed using normal Q–Q plots and histograms of residuals, and failed as there were tails straying from the reference line caused by points 1 and 33. Lastly the independence assumption was met since all the observations represent unique data from independent universities.
+
+**Extra Technique - Box-Cox Transformation**
+
+To address the violations of normality and constant variance, a Box-Cox procedure was implemented. This technique evaluates a family of power transformations lambda to identify the function that best minimizes variance and normalizes the error distribution. By calculating the log-likelihood for a range of possible powers, the method pinpoints the lambda value that maximizes the probability of the data having a normal distribution. Our analysis yielded a lambda value of approximately -0.424. As this value is closest to -0.5, a reciprocal square-root transformation was selected as the most appropriate correction. The model was then refitted using this transformed response, and the AIC improved from 69.625 to -48.74945, indicating a better model fit.
+
+**Outlier and Influence Analysis**
+
+Following the transformation, the residual assumptions were re-evaluated and found to be improved. We then conducted various residual analysis techniques to identify potential outliers. First, we tested for the DFFITS and DFBETAS to quantify the impact of specific observations on predicted values and regression coefficients. Cutoffs were calculated for DFFITS (0.57) and DFBETAS (0.28), and we realized observation 33 was much higher than both cutoffs. The cutoff for Cook’s distance was 0.08, and observations 1 and 33 exceeded this threshold with values of 0.26 and 2.23 respectively. Observations 1 and 33 also exceeded the threshold of +/-2 for the studentized residuals, with values of 2.7 and -2.33. With a threshold of 0.16, observations 1, 3, and 33 exceeded the leverage threshold with values of 0.173, 0.289, and 0.583 respectively. In conclusion, observation 33 (MIT) was identified as a highly influential point that exceeded multiple thresholds, disproportionately affecting the model’s coefficients more than other values. Additionally, we tried removing observation 1 as well, but noticed that the adjusted R-squared value increased more by only removing 33. Thus, we decided to keep observation 1 in the final model.
+
+**Final Model Selection**
+
+After removing observation 33, the final model was fitted, with total operating budget, postgraduate salary, and public/private status as predictors, with a transformed reciprocal square-root as the response variable: $$\widehat{\frac{1}{\sqrt{RD}}} = \beta_0 - \beta_1\,PGS - \beta_2\,TOB - \beta_3\,PUBPRIV$$
+
+-   PUBPRIV = 1 if Public, 0 if Private
+
+## Results
+
+The final model explains approximately 27.4% of the variance in R&D Expenditures (Adjusted R squared = 0.2744). The global F-test confirms the model is statistically significant, giving us an F-statistic of 7.049 and p-value of 0.00055 (p\<0.05), indicating that the predictors collectively explain a moderate portion of the variability in the response.
+
+Regarding the individual predictors, median postgraduate salary was found to be a significant predictor with a p-value of 0.003 (\<0.05). However, total operating budget and public/private status have p-value above 0.05 with p=0.294 and p=0.431 respectively. Although not significant predictors, we kept both variables in the final model to directly address the research questions regarding the impact of institutional resources and sector type. Residual analysis of the final model demonstrated that the assumptions of linearity, homoscedasticity, and normality were reasonably satisfied after the transformation and outlier removal positively impacted our model's fit.
+
+## Conclusions
+
+The final prediction equation for the transformed response is:
+
+$$\widehat{\frac{1}{\sqrt{RD}}} = 1.284 - 0.408\,PGS - 0.007\,TOB - 0.039\,PUBPRIV$$
+
+-   PUBPRIV = 1 if Public, 0 if Private
+
+Because the response variable was transformed to a reciprocal square root through the box-cox transformation, the negative coefficients indicated a positive relationship with the original R&D expenditures (as the denominator decreases, the total value increases). The coefficients are interpreted as follows:
+
+Firstly, the intercept of 1.284 represents the baseline transformed R&D value when all predictors are zero. While a university with a zero budget or salary is impossible, this value anchors the regression line. Second, the postgraduate salary of -0.408 indicates that for every 1 unit increase (one hundred thousand USD) in median postgraduate salary, the transformed response decreases by 0.408, holding other variables constant. This implies that universities with higher graduate earning are associated with significantly higher actual R&D expenditures. Third, the total operating budget of -0.007 represent that for every 1 unit increase (one billion USD) in total operating budget, the transformed response decreases by 0.007, holding other variables constant. This suggests that a larger operating budget is associated with a slight increase in actual R&D expenditures. Lastly, public vs private being -0.039 represents that the transformed value for public universities is 0.039 lower than for private universities. This implies that public universities are estimated to have slightly higher actual R&D expenditures than their private counterparts in this model.
+
+**Example**
+
+In order to demonstrate the model's application, we predicted the 2023 R&D expenditures for the University of Virginia. Given it is a public institution (1), its median postgraduate salary of \$82,310 and an Operating Budget of 5.1 billion USD,
+
+$1.284 - 0.408(0.8231) - 0.007(5.4) - 0.039(1)$ $= 1.284 - 0.336 - 0.038 - 0.039 = 0.871$ $\widehat{R\&D} = \left( \frac{1}{0.871} \right)^2 \approx 1.31 \text{ Billion USD}$
+
+The model predicted an expenditure of \$1.31 billion, while UVA's actual reported spending was \$0.71 billion. The model overestimated spending for this specific institution, suggesting that UVA spends less on research than expected given its graduate salary outcomes and operating budget compared to peer institutions in this data set.
+
+**Limitations and Further Studies**
+
+While this study offers valuable insights into R&D funding, it is subject to several limitations. First, the data represents R&D expenditure values from 2023, making it imprecise in calculating today's funding, possibly due to inflation and changes in funding policies. Furthermore, inconsistencies in how different universities report their total operating budget reduce comparability and may introduce measurement errors that weaken the model's predictive power. The model also does not account for external influences on research funding, such as the presence of specialized programs, historical endowment restrictions, specific institutional policies, or broader economic conditions, which likely play a significant role in determining expenditure levels.
+
+Future research could address these gaps by incorporating data spanning multiple years to observe trends and consistency in R&D spending. To improve the model's scope and reliability, the data set could be expanded to include the top 100 universities rather than just the top 50, and data collection methods should be refined to ensure more consistent institutional reporting. Additionally, testing new variables such as the age of the university and metrics related to school success could provide a more holistic view of the factors driving funding. Finally, investigating how broader U.S. policy changes and overall spending trends affect R&D funding would provide context for these institutional-level findings.
+
+\newpage
+
+## Appendix A: Data Dictionary
+
+| Variable Name | Abbreviated Name | Description |
+|:----------------------:|:----------------------:|:----------------------:|
+| School | UNI | Name of University (observations) |
+| :-------------: | :----------------: | :----------------------------: |
+| R&D | RD | 2023 Research and Development |
+| Expenditures |  | expenditures (in billions of USD), |
+|  |  | reported by government agency NSF |
+| :-------------: | :----------------: | :----------------------------: |
+| Public/Private | PUBPRIV | Type of institution: PUBPRIV = 1 if "Public", |
+|  |  | 0 if "Private," provided by universities |
+| :-------------: | :----------------: | :----------------------------: |
+| AAU | AAU | Association of American |
+| Membership |  | Universities membership status: |
+|  |  | AAU = 1 if "Yes" the school is a |
+|  |  | member, 0 if "No" the school |
+|  |  | is not a member, from the AAU |
+| :-------------: | :----------------: | :----------------------------: |
+| Type of | LOC | Region classification of the |
+| Location |  | school: LOC = 1 if "City", 0 if the |
+|  |  | school is in a "College Town," |
+|  |  | based on population criteria |
+| :-------------: | :----------------: | :----------------------------: |
+| Student | SPOP | Total Student Population from |
+| Population |  | 2023, provided by universities |
+| :-------------: | :----------------: | :----------------------------: |
+| Acceptance Rate | AR | Modern undergraduate acceptance rate |
+|  |  | as a percentage, provided by universities |
+| :-------------: | :----------------: | :----------------------------: |
+| Median Post-Graduation | PGS | Median postgraduate salary in 2023 |
+| Salary |  | (mid-career, in hundreds of thousands of USD), |
+|  |  | provided by trusted website (College Transitions) |
+| :-------------: | :----------------: | :----------------------------: |
+| Student:Faculty | SFR | Student-to-faculty ratio for each |
+| Ratio |  | university, the data indicates |
+|  |  | the number of students for every |
+|  |  | 1 faculty, provided by universities |
+| :-------------: | :----------------: | :----------------------------: |
+| Total Operating | TOB | The Total Operating Budget of |
+| Budget |  | each university in 2023 (in billions of USD), |
+|  |  | provided by universities |
+| :-------------: | :----------------: | :----------------------------: |
+
+\newpage
+
+## Appendix B: Data Rows
+
+```{r, echo=FALSE}
+head(ProjectData)
+```
+
+\newpage
+
+## Appendix C: Final Model Output and Plots
+
+```{r, echo=FALSE, warning=FALSE,results=FALSE}
+## Summary of final model
+
+# multicollinearity Check
+uni_0 <- lm(RD_Spend ~ Student_Pop + 
+                 Acceptance_Rate + Postgrad_Salary + Student_Faculty_Ratio + 
+                 Operating_Budget, data=ProjectData)
+
+uni_1_vif<-round(vif(uni_0),3)
+uni_1_vif
+mean(uni_1_vif)
+
+# Fitted model with all quanitative predictors for stepwise selection
+uni_0 <- lm(RD_Spend ~ Student_Pop + 
+                 Acceptance_Rate + Postgrad_Salary + Student_Faculty_Ratio + 
+                 Operating_Budget, data=ProjectData)
+# Stepwise selection to remove insignificant variables
+uni_1_vif <- ols_step_both_p(uni_0,p_ent=0.1,p_rem=0.3,details=T)
+summary(uni_1_vif)
+
+# Individual T-tests on each qualitative variable
+QualTest1 <- lm(RD_Spend ~ Postgrad_Salary + Operating_Budget + Public_Private, data = ProjectData)
+summary(QualTest1)
+
+QualTest2 <- lm(RD_Spend ~ Postgrad_Salary + Operating_Budget + AAU, data = ProjectData)
+summary(QualTest2)
+
+QualTest3 <- lm(RD_Spend ~ Postgrad_Salary + Operating_Budget + Location_Type, data = ProjectData)
+summary(QualTest3)
+
+QualTest4 <- lm(RD_Spend ~ Postgrad_Salary + Operating_Budget + AAU*Public_Private, data = ProjectData)
+summary(QualTest4)
+
+# Initial Model Building 
+## Step 1: Add All Quantitative Variables
+Model1 <- lm(RD_Spend ~ Student_Pop + Acceptance_Rate + Postgrad_Salary + 
+               Student_Faculty_Ratio + Operating_Budget, data=ProjectData)
+## Step 2: Remove Quantitative Predictors from Stepwise Regression: 
+Model2 <- lm(RD_Spend ~ Postgrad_Salary + Operating_Budget, data=ProjectData)
+## Step 3: Add Relevant Qualitative Variables (Public_Private from research question):
+Model3 <- lm(RD_Spend ~ Postgrad_Salary + Operating_Budget + Public_Private, data=ProjectData)
+summary(Model3)
+
+# Assumption Checks
+## Lack of Fit Assumption Check
+res   <- resid(Model3)
+
+plot(ProjectData$Postgrad_Salary, res,
+     xlab = "Median Postgrad Salary", ylab = "Residuals",
+     main = "PGS Residual Plot")
+abline(h = 0, lty = 2)
+
+plot(ProjectData$Operating_Budget, res,
+     xlab = "Total Operating Budget", ylab = "Residuals",
+     main = "TOB Residual Plot")
+abline(h = 0, lty = 2)
+
+boxplot(res ~ ProjectData$Location_Type,
+        xlab = "Location_Type", ylab = "Residuals",
+        main = "Residuals by Location_Type")
+abline(h = 0, lty = 2)
+
+boxplot(res ~ ProjectData$AAU,
+        xlab = "AAU", ylab = "Residuals",
+        main = "Residuals by AAU")
+abline(h = 0, lty = 2)
+
+boxplot(res ~ ProjectData$Public_Private,
+        xlab = "Public_Private", ylab = "Residuals",
+        main = "Residuals by Public/Private")
+abline(h = 0, lty = 2)
+## Constant Variance Assumption Check
+plot(Model3, 1, main="Linearity Check")
+## Normality Assumption Check
+plot(Model3, 2, main="Normality Q-Q Plot")
+
+# Box-cox graph
+bc <- boxcox(Model3)
+## Determine lamda value
+lambda_hat <- bc$x[which.max(bc$y)]
+lambda_hat
+## Add column with response corresponding to a reciprocal square-root transformation
+ProjectData$RD_t <- 1/sqrt(ProjectData$RD_Spend)
+ModelT <- lm(RD_t ~ Postgrad_Salary + Operating_Budget + Public_Private, data=ProjectData)
+summary(ModelT)
+uva_row <- ProjectData[48, , drop = FALSE]
+
+# Check if transformation helped
+## Lack of Fit Assumption Check
+res   <- resid(ModelT)
+
+plot(ProjectData$Postgrad_Salary, res,
+     xlab = "Postgrad_Salary", ylab = "Residuals",
+     main = "Residuals vs Postgrad_Salary")
+abline(h = 0, lty = 2)
+
+plot(ProjectData$Operating_Budget, res,
+     xlab = "Operating_Budget", ylab = "Residuals",
+     main = "Residuals vs Operating_Budget")
+abline(h = 0, lty = 2)
+
+boxplot(res ~ ProjectData$Location_Type,
+        xlab = "Location_Type", ylab = "Residuals",
+        main = "Residuals by Location_Type")
+abline(h = 0, lty = 2)
+
+boxplot(res ~ ProjectData$AAU,
+        xlab = "AAU", ylab = "Residuals",
+        main = "Residuals by AAU")
+abline(h = 0, lty = 2)
+
+boxplot(res ~ ProjectData$Public_Private,
+        xlab = "Public_Private", ylab = "Residuals",
+        main = "Residuals by Public/Private")
+abline(h = 0, lty = 2)
+## Constant Variance Assumption Check
+plot(ModelT, 1, main="Linearity Check")
+## Normality Assumption Check
+plot(ModelT, 2, main="Normality Q-Q Plot")
+ResponseHisto2 <- hist(ProjectData$RD_t, 
+                      main = "Histogram of 1/log(R&D)",
+                      xlab = "R&D Expenditures",
+                      ylab = "University Frequency")
+AIC(Model3)
+AIC(ModelT)
+
+# Residual Analysis
+## Cook's Distance
+plot(ModelT,which=4)
+## Leverage & Studenttized Residuals
+influencePlot(ModelT,fill=F)
+## Deleted Studentized Residals
+ols_plot_resid_stud_fit(ModelT)
+
+# Outlier and Influence Analysis
+## Generate DfFits and summary of dffits for all observations
+gfdffits<-dffits(ModelT)
+gfdffits[c("1","33")]
+## Compare DF Betas of these values to all observations
+gfdfbeta<-dfbetas(ModelT)
+gfdfbeta[c("1","33"),]
+## Cutoffs for DFFits and DFBetas
+n <- nobs(ModelT)
+p <- length(coef(ModelT))
+dff <- dffits(ModelT)
+dffits_cut <- 2 * sqrt(p / n)
+cat("n =", n, " p =", p, "\n")
+cat("DFFITS cutoff =", dffits_cut, "\n\n")
+dfb <- dfbetas(ModelT)                
+dfbetas_cut <- 2 / sqrt(n)
+cat("\nDFBETAS cutoff =", dfbetas_cut, "\n\n")
+
+#Refitting Model Without Most Influential Point
+##  Remove row 33
+ProjectData_Clean <- ProjectData[-c(33), ]
+## Refit the Model (Same variables as ModelT) without observation
+ModelFinal <- lm(RD_t ~ Postgrad_Salary + Operating_Budget + Public_Private, data = ProjectData_Clean)
+# Compare Results
+summary(ModelT)
+summary(ModelFinal)
+coef(ModelFinal)
+```
+
+```{R, echo=FALSE, warning=FALSE,results=FALSE}
+## functions or summaries not included output 
+# just final model building function (<- lm()) and summary
+
+ModelFinal <- lm(RD_t ~ Postgrad_Salary + Operating_Budget + Public_Private, data = ProjectData_Clean)
+summary(ModelFinal)
+```
+
+\newpage
+
+## Appendix D: References
+
+### Background
+
+-   Flannery, M. E. (2025, May 27). *Trump cancels federal research grants. What are the consequences?*. NEA. <https://www.nea.org/nea-today/all-news-articles/trump-cancels-federal-research-grants-what-are-consequences>
+
+-   Long, T. (2025, April 22). *Why University Research Is Crucial to US Competitiveness*. Itif.org; Information\
+    Technology and Innovation Foundation \| ITIF. <https://itif.org/publications/2025/04/22/why-university-research-is-crucial-to-us-competitiveness/>
+
+-   Rosowsky, D. (2024, February 20). *The role of research at universities: Why it matters*. Forbes. <https://www.forbes.com/sites/davidrosowsky/2022/03/02/the-role-of-research-at-universities-why-it-matters/>
+
+### Data Sources
+
+-   College Transitions. (n.d.). Graduate Earnings. Dataverse. <https://www.collegetransitions.com/dataverse/graduate-earnings>
+
+-   National Science Foundation (NSF). (n.d.). Higher Education Research and Development (HERD) Survey: Ranking by Source. National Center for Science and Engineering Statistics. <https://ncsesdata.nsf.gov/profiles/site?method=rankingbysource&ds=herd>
+
+-   *Our members*. Association of American Universities (AAU). (n.d.). <https://www.aau.edu/who-we-are/our-members>
+
+-   U.S. News & World Report. (n.d.). National Universities ranking. *U.S. News & World Report.* <https://www.usnews.com/best-colleges/rankings/national-universities?myCollege=national-universities&_sort=myCollege&_sortDirection=asc>
+
+### Additional Help
+
+-   N/A
